@@ -1,1 +1,1 @@
-mod hello_starknet;
+mod prediction_market;

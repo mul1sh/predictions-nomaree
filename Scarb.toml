@@ -1,5 +1,14 @@
 [package]
-name = "hello_starknet"
+name = "bets_nomaree"
 version = "0.1.0"
 
+[[target.starknet-contract]]
+# Enable Sierra codegen.
+sierra = true
+# Enable CASM codegen.
+casm = false
+# Emit Python-powered hints in order to run compiled CASM class with legacy Cairo VM.
+casm-add-pythonic-hints = false
+
 [dependencies]
+starknet = ">=1.0.0"
