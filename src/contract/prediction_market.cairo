@@ -98,7 +98,7 @@ mod PredictionMarket {
             participant: caller,
             amount: _amount,
             candidate: _candidate,
-            redeemed: 0,
+            redeemed: bool_to_felt252(false),
         };
 
         // set the users bet
