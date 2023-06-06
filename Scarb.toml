@@ -1,5 +1,5 @@
 [package]
-name = "bets_nomaree"
+name = "prediction_market"
 version = "0.1.0"
 
 [[target.starknet-contract]]
