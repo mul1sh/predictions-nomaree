@@ -63,13 +63,14 @@ mod PredictionMarket {
   
     // public contract storage
     struct Storage {
-        predictions: LegacyMap::<ContractAddress, Prediction>,
+        predictions: LegacyMap::<felt252, Prediction>,
+        user_balances:  LegacyMap::<ContractAddress, u256>,
         token: ContractAddress,
         oracle: ContractAddress
     }
 
     #[event]
-    fn NewBetMarket(participant: ContractAddress, amount: u256, candidate: felt252) {}
+    fn NewBetMarket(marketID: felt252, participant: ContractAddress, amount: u256, candidate: felt252) {}
 
     #[constructor]
     fn constructor(_tokenAddress:  ContractAddress, _oracleAddress: ContractAddress){
@@ -78,20 +79,21 @@ mod PredictionMarket {
     }
 
     #[external]
-    fn makePrediction(_candidate: felt252, _amount: u256) {
+    fn makePrediction(_marketID: felt252, _candidate: felt252, _amount: u256) {
         let caller = get_caller_address();
         let this_contract = get_contract_address();
+        let token_address = token::read();
 
         // check that the user has beforehand approved the address of the prediction market to spend the prediction/betting amount of the token
-        let allowance = IERC20Dispatcher {contract_address: token::read()}.allowance(caller, this_contract);
+        let allowance = IERC20Dispatcher {contract_address: token_address }.allowance(caller, this_contract);
         assert(allowance >= _amount, 'Contract not approved');
 
         // check if the user has enough balance
-        let userBal = IERC20Dispatcher {contract_address: token::read()}.balance_of(caller);
-        assert(userBal >= _amount, 'Amount less than user balance');
+        let userTokenBal = IERC20Dispatcher {contract_address: token_address }.balance_of(caller);
+        assert(userTokenBal >= _amount, 'Amount less than user balance');
 
         // if everything checks out, transfer the token amount from user to contract
-        IERC20Dispatcher {contract_address: token::read()}.transfer_from(caller, this_contract, _amount);
+        IERC20Dispatcher {contract_address: token_address }.transfer_from(caller, this_contract, _amount);
 
         // once the transfer is successful write a mapping of the prediction for this user address
         let bet = Prediction {
@@ -101,9 +103,17 @@ mod PredictionMarket {
             redeemed: bool_to_felt252(false),
         };
 
-        // set the users bet
-        predictions::write(caller, bet);
-       
+        // set the users bet/prediction in the mapping
+        predictions::write(_marketID, bet);
+
+        // update the user balances
+        let user_bal = user_balances::read(caller);
+        let new_user_bal = user_bal + _amount;
+
+        user_balances::write(caller, new_user_bal);
+
+        // emit a new prediction/bet event
+        NewBetMarket(_marketID, caller, _amount, _candidate) 
     }
 
     #[external]
