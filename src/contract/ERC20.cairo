@@ -4,10 +4,7 @@ mod ERC20Contract {
     use zeroable::Zeroable;
     use starknet::get_caller_address;
     use starknet::ContractAddress;
-    use starknet::contract_address_try_from_felt252;
-    use traits::Into;
-    use traits::TryInto;
-    use option::OptionTrait;
+  
 
     struct Storage {
         name: felt252,

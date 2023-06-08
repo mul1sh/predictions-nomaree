@@ -60,6 +60,7 @@ mod PredictionMarket {
         ContractAddress, get_caller_address, get_contract_address, contract_address::Felt252TryIntoContractAddress
     };
     use super::Prediction;
+    use zeroable::Zeroable;
   
     // public contract storage
     struct Storage {
@@ -70,16 +71,18 @@ mod PredictionMarket {
     }
 
     #[event]
-    fn NewBetMarket(marketID: felt252, participant: ContractAddress, amount: u256, candidate: felt252) {}
+    fn NewBetMarket(betID: felt252, participant: ContractAddress, amount: u256, candidate: felt252) {}
 
     #[constructor]
     fn constructor(_tokenAddress:  ContractAddress, _oracleAddress: ContractAddress){
+        assert(!_tokenAddress.is_zero(), 'Zero Address not allowed');
+        assert(!_oracleAddress.is_zero(), 'Zero Address not allowed');
         token::write(_tokenAddress);
         oracle::write(_oracleAddress);
     }
 
     #[external]
-    fn makePrediction(_marketID: felt252, _candidate: felt252, _amount: u256) {
+    fn makePrediction(_betID: felt252, _candidate: felt252, _amount: u256) {
         let caller = get_caller_address();
         let this_contract = get_contract_address();
         let token_address = token::read();
@@ -90,7 +93,7 @@ mod PredictionMarket {
 
         // check if the user has enough balance
         let userTokenBal = IERC20Dispatcher {contract_address: token_address }.balance_of(caller);
-        assert(userTokenBal >= _amount, 'Amount less than user balance');
+        assert(userTokenBal >= _amount, 'User balance less than amount');
 
         // if everything checks out, transfer the token amount from user to contract
         IERC20Dispatcher {contract_address: token_address }.transfer_from(caller, this_contract, _amount);
@@ -104,7 +107,7 @@ mod PredictionMarket {
         };
 
         // set the users bet/prediction in the mapping
-        predictions::write(_marketID, bet);
+        predictions::write(_betID, bet);
 
         // update the user balances
         let user_bal = user_balances::read(caller);
@@ -113,7 +116,7 @@ mod PredictionMarket {
         user_balances::write(caller, new_user_bal);
 
         // emit a new prediction/bet event
-        NewBetMarket(_marketID, caller, _amount, _candidate) 
+        NewBetMarket(_betID, caller, _amount, _candidate) 
     }
 
     #[external]
@@ -125,8 +128,4 @@ mod PredictionMarket {
     fn withdrawTokens(recipient: ContractAddress, amount: u256)  {
         
     }
-
-   
-
-
 }
