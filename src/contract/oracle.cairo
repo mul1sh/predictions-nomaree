@@ -10,7 +10,7 @@ mod Oracle {
         winningCandidate::write(_winningCandidate)
     }
 
-     #[external]
+    #[external]
     fn getPredictionWinner() -> felt252{
         winningCandidate::read()
     }
